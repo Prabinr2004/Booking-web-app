@@ -27,7 +27,7 @@ form.addEventListener('submit', (e) => {
     phone: form.phone.value,
     email: form.email.value,
     people: form.people.value,
-    date: form.date.value,
+    date: form.date.value, // This will be like '2025-07-09'
     time: form.time.value
   };
 
@@ -53,7 +53,7 @@ form.addEventListener('submit', (e) => {
   }
 
   form.reset();
-  saveBookings(); // --- NEW: Save after adding/editing ---
+  saveBookings();
   renderBookings();
 });
 
@@ -72,7 +72,7 @@ function renderBookings() {
     const li = document.createElement('li');
     li.innerHTML = `
       <strong>${b.name}</strong> (${b.people} people)<br>
-      ${b.date} at ${formatTime(b.time)}<br>
+      ${formatDate(b.date)} at ${formatTime(b.time)}<br>
       ${b.phone} | ${b.email}<br>
       <button onclick="editBooking(${b.id})">Edit</button>
       <button onclick="deleteBooking(${b.id})">Delete</button>
@@ -83,7 +83,7 @@ function renderBookings() {
 
 function deleteBooking(id) {
   bookings = bookings.filter(b => b.id !== id);
-  saveBookings(); // --- NEW: Save after deleting ---
+  saveBookings();
   renderBookings();
 }
 
@@ -106,6 +106,16 @@ function formatTime(timeStr) {
   const ampm = h >= 12 ? 'PM' : 'AM';
   h = h % 12 || 12;
   return `${h}:${minute} ${ampm}`;
+}
+
+// --- NEW FUNCTION: Formats the date string ---
+function formatDate(dateStr) {
+  // dateStr will be in 'YYYY-MM-DD' format
+  const [year, month, day] = dateStr.split('-');
+  const date = new Date(year, month - 1, day); // Month is 0-indexed in Date constructor
+
+  const options = { year: 'numeric', month: 'long', day: 'numeric' };
+  return date.toLocaleDateString('en-US', options);
 }
 
 // --- NEW CODE: Call loadBookings when the script first runs ---
