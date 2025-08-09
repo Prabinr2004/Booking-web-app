@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Restaurant Booking Manager</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#28a745">
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    max-width: 600px;
+    margin: auto;
+    padding: 10px;
+    background: #f4f4f4;
+  }
+  h1 {
+    text-align: center;
+    color: #333;
+  }
+  form {
+    background: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  input, button {
+    padding: 10px;
+    margin: 5px 0;
+    width: 100%;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+  }
+  button {
+    background: #28a745;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+  button:hover {
+    background: #218838;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+  }
+  th, td {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    text-align: center;
+  }
+  .edit-btn {
+    background: #ffc107;
+    color: #000;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .delete-btn {
+    background: #dc3545;
+    color: #fff;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<h1>Restaurant Booking Manager</h1>
+
+<form id="bookingForm">
+  <input id="name" placeholder="Name" required>
+  <input id="phone" placeholder="Phone" required>
+  <input id="email" placeholder="Email">
+  <input type="number" id="people" placeholder="Number of People" min="1" required>
+  <input type="time" id="time" required>
+  <input type="date" id="date" required>
+  <button type="submit">Save Booking</button>
+</form>
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Phone</th>
+      <th>People</th>
+      <th>Date</th>
+      <th>Time</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody id="bookingList"></tbody>
+</table>
+
+<script>
+let bookings = JSON.parse(localStorage.getItem("bookings")) || [];
+let editIndex = null;
+
+function saveToStorage() {
+  localStorage.setItem("bookings", JSON.stringify(bookings));
+}
+
+function formatAMPM(timeStr) {
+  let [hour, minute] = timeStr.split(":").map(Number);
+  let ampm = hour >= 12 ? "PM" : "AM";
+  hour = hour % 12 || 12;
+  return `${hour}:${minute.toString().padStart(2, '0')} ${ampm}`;
+}
+
+function renderBookings() {
+  const list = document.getElementById("bookingList");
+  list.innerHTML = bookings.map((b, i) => `
+    <tr>
+      <td>${b.name}</td>
+      <td>${b.phone}</td>
+      <td>${b.people}</td>
+      <td>${b.date}</td>
+      <td>${formatAMPM(b.time)}</td>
+      <td>
+        <button class="edit-btn" onclick="editBooking(${i})">Edit</button>
+        <button class="delete-btn" onclick="deleteBooking(${i})">Delete</button>
+      </td>
+    </tr>
+  `).join("");
+}
+
+function editBooking(index) {
+  let b = bookings[index];
+  document.getElementById("name").value = b.name;
+  document.getElementById("phone").value = b.phone;
+  document.getElementById("email").value = b.email;
+  document.getElementById("people").value = b.people;
+  document.getElementById("time").value = b.time;
+  document.getElementById("date").value = b.date;
+  editIndex = index;
+}
+
+function deleteBooking(index) {
+  if (confirm("Delete this booking?")) {
+    bookings.splice(index, 1);
+    saveToStorage();
+    renderBookings();
+  }
+}
+
+document.getElementById("bookingForm").addEventListener("submit", function(e) {
+  e.preventDefault();
+  
+  let booking = {
+    name: document.getElementById("name").value.trim(),
+    phone: document.getElementById("phone").value.trim(),
+    email: document.getElementById("email").value.trim(),
+    people: document.getElementById("people").value.trim(),
+    time: document.getElementById("time").value,
+    date: document.getElementById("date").value
+  };
+
+  let isDuplicate = bookings.some((b, idx) => 
+    idx !== editIndex &&
+    b.phone === booking.phone &&
+    b.date === booking.date &&
+    b.time === booking.time
+  );
+  if (isDuplicate) {
+    alert("Duplicate booking for same phone/date/time!");
+    return;
+  }
+
+  if (editIndex !== null) {
+    bookings[editIndex] = booking;
+    editIndex = null;
+  } else {
+    bookings.push(booking);
+  }
+
+  saveToStorage();
+  renderBookings();
+  e.target.reset();
+});
+
+renderBookings();
+
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('service-worker.js').then(() => {
+    console.log("Service Worker Registered");
+  });
+}
+</script>
+
+</body>
+</html>
