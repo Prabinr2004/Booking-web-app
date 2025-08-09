@@ -4,7 +4,7 @@
   "start_url": "/Booking-web-app/index.html?homescreen=1",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#28a745",
+  "theme_color": "#FFC107",
   "icons": [
     {
       "src": "icon-192.png",
