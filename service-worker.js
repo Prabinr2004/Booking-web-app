@@ -1,22 +1,28 @@
-const CACHE_NAME = 'booking-manager-v1';
-const urlsToCache = [
-  './',
+const CACHE_NAME = 'restaurant-booking-v1';
+const ASSETS_TO_CACHE = [
+  './', // Home page
   './index.html',
-  './manifest.json'
+  './style.css',
+  './script.js',
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png'
 ];
 
-self.addEventListener('install', e => {
-  e.waitUntil(
+// Install Service Worker & Cache Assets
+self.addEventListener('install', event => {
+  event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(urlsToCache);
+      return cache.addAll(ASSETS_TO_CACHE);
     })
   );
 });
 
-self.addEventListener('fetch', e => {
-  e.respondWith(
-    caches.match(e.request).then(response => {
-      return response || fetch(e.request);
+// Serve Cached Assets When Offline
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request).then(response => {
+      return response || fetch(event.request);
     })
   );
 });
