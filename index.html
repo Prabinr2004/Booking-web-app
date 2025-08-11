@@ -1,74 +1,117 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8" />
 <title>Restaurant Booking Manager</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#FFC107">
+<meta name="theme-color" content="#FFC107" />
 <style>
+  /* Dark textured + gold theme (inputs transparent with gold borders etc.) */
   body {
-    font-family: Arial, sans-serif;
-    max-width: 600px;
-    margin: auto;
-    padding: 10px;
-    background: #f4f4f4;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    max-width: 900px;
+    margin: 16px auto;
+    padding: 18px;
+    background: #0f0f0f url('bg-texture.png') repeat;
+    color: #fff;
+    box-sizing: border-box;
   }
+
   h1 {
     text-align: center;
-    color: #333;
+    color: #FFC107;
+    margin: 6px 0 18px;
   }
+
+  /* Form box */
   form {
-    background: #fff;
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 0 5px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
     width: 100%;
     box-sizing: border-box;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid #FFC107;
+    padding: 14px;
+    border-radius: 10px;
+    margin-bottom: 18px;
   }
-  input, button {
+
+  /* inputs: transparent bg, gold border, white placeholder */
+  input[type="text"],
+  input[type="tel"],
+  input[type="email"],
+  input[type="number"],
+  input[type="time"],
+  input[type="date"] {
+    width: 100%;
+    box-sizing: border-box;
     padding: 10px;
-    margin: 5px 0;
+    margin: 8px 0;
+    border-radius: 6px;
+    border: 1px solid #FFC107;
+    background: transparent;
+    color: #fff;
+    outline: none;
+    font-size: 15px;
+  }
+  input::placeholder { color: rgba(255,255,255,0.8); }
+
+  /* gold buttons with black text */
+  button[type="submit"] {
     width: 100%;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    box-sizing: border-box;
-  }
-  button {
-    background: #28a745;
-    color: white;
+    padding: 11px;
+    margin-top: 10px;
+    border-radius: 6px;
     border: none;
+    background: #FFC107;
+    color: #000;
+    font-weight: 700;
     cursor: pointer;
+    font-size: 16px;
   }
-  button:hover {
-    background: #218838;
-  }
+  button[type="submit"]:hover { background: #e6ac00; }
+
+  /* Table */
   table {
     width: 100%;
     border-collapse: collapse;
-    background: #fff;
-  }
-  th, td {
-    padding: 10px;
-    border-bottom: 1px solid #ddd;
-    text-align: center;
-  }
-  .edit-btn {
-    background: #ffc107;
-    color: #000;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  .delete-btn {
-    background: #dc3545;
+    box-sizing: border-box;
+    margin-top: 6px;
+    border: 1px solid #2a2a2a;
+    background: rgba(0,0,0,0.6);
     color: #fff;
+  }
+  th {
+    background: #261800; /* dark brown-ish to contrast gold header */
+    color: #FFC107;
+    padding: 10px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255,193,7,0.15);
+  }
+  td {
+    padding: 10px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+  tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+
+  .edit-btn, .delete-btn {
+    padding: 6px 10px;
+    border-radius: 6px;
     border: none;
-    padding: 5px 10px;
-    border-radius: 4px;
     cursor: pointer;
+    font-weight: 700;
+    margin: 0 4px;
+  }
+  .edit-btn { background: #FFC107; color: #000; }
+  .edit-btn:hover { background: #e6ac00; }
+  .delete-btn { background: #dc3545; color: #fff; }
+  .delete-btn:hover { background: #b21b2d; }
+
+  /* small screens */
+  @media (max-width:480px) {
+    body { padding: 12px; }
+    button[type="submit"] { font-size: 15px; padding: 10px; }
+    th, td { padding: 8px; font-size: 13px; }
   }
 </style>
 </head>
@@ -77,16 +120,16 @@
 <h1>Restaurant Booking Manager</h1>
 
 <form id="bookingForm">
-  <input id="name" placeholder="Name" required>
-  <input id="phone" placeholder="Phone" required>
-  <input id="email" placeholder="Email">
-  <input type="number" id="people" placeholder="Number of People" min="1" required>
-  <input type="time" id="time" required>
-  <input type="date" id="date" required>
+  <input id="name" type="text" placeholder="Name" required />
+  <input id="phone" type="tel" placeholder="Phone" required />
+  <input id="email" type="email" placeholder="Email (optional)" />
+  <input id="people" type="number" placeholder="Number of People" min="1" required />
+  <input id="time" type="time" required />
+  <input id="date" type="date" required />
   <button type="submit">Save Booking</button>
 </form>
 
-<table>
+<table aria-label="Bookings table">
   <thead>
     <tr>
       <th>Name</th>
@@ -101,98 +144,95 @@
 </table>
 
 <script>
-let bookings = JSON.parse(localStorage.getItem("bookings")) || [];
+/* Simple offline-first booking manager (localStorage) */
+const BOOKINGS_KEY = 'bookings';
+let bookings = JSON.parse(localStorage.getItem(BOOKINGS_KEY)) || [];
 let editIndex = null;
 
-function saveToStorage() {
-  localStorage.setItem("bookings", JSON.stringify(bookings));
+function saveToStorage(){ localStorage.setItem(BOOKINGS_KEY, JSON.stringify(bookings)); }
+
+function formatAMPM(timeStr){
+  if(!timeStr) return '';
+  const [hour, minute] = timeStr.split(':').map(Number);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const h = hour % 12 || 12;
+  return `${h}:${String(minute).padStart(2,'0')} ${ampm}`;
 }
 
-function formatAMPM(timeStr) {
-  let [hour, minute] = timeStr.split(":").map(Number);
-  let ampm = hour >= 12 ? "PM" : "AM";
-  hour = hour % 12 || 12;
-  return `${hour}:${minute.toString().padStart(2, '0')} ${ampm}`;
-}
-
-function renderBookings() {
-  const list = document.getElementById("bookingList");
-  list.innerHTML = bookings.map((b, i) => `
+function renderBookings(){
+  const list = document.getElementById('bookingList');
+  list.innerHTML = bookings.map((b,i)=>`
     <tr>
-      <td>${b.name}</td>
-      <td>${b.phone}</td>
-      <td>${b.people}</td>
-      <td>${b.date}</td>
+      <td>${escapeHtml(b.name)}</td>
+      <td>${escapeHtml(b.phone)}</td>
+      <td>${escapeHtml(b.people)}</td>
+      <td>${escapeHtml(b.date)}</td>
       <td>${formatAMPM(b.time)}</td>
       <td>
         <button class="edit-btn" onclick="editBooking(${i})">Edit</button>
         <button class="delete-btn" onclick="deleteBooking(${i})">Delete</button>
       </td>
     </tr>
-  `).join("");
+  `).join('');
 }
 
-function editBooking(index) {
-  let b = bookings[index];
-  document.getElementById("name").value = b.name;
-  document.getElementById("phone").value = b.phone;
-  document.getElementById("email").value = b.email;
-  document.getElementById("people").value = b.people;
-  document.getElementById("time").value = b.time;
-  document.getElementById("date").value = b.date;
-  editIndex = index;
+function escapeHtml(s){
+  if(!s) return '';
+  return String(s).replace(/[&<>"'`]/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;', '`':'&#96;' }[c]));
 }
 
-function deleteBooking(index) {
-  if (confirm("Delete this booking?")) {
-    bookings.splice(index, 1);
-    saveToStorage();
-    renderBookings();
-  }
+function editBooking(idx){
+  const b = bookings[idx];
+  document.getElementById('name').value = b.name;
+  document.getElementById('phone').value = b.phone;
+  document.getElementById('email').value = b.email || '';
+  document.getElementById('people').value = b.people;
+  document.getElementById('time').value = b.time;
+  document.getElementById('date').value = b.date;
+  // remove original entry so saving will replace it (simpler flow)
+  bookings.splice(idx,1);
+  saveToStorage();
+  renderBookings();
 }
 
-document.getElementById("bookingForm").addEventListener("submit", function(e) {
+function deleteBooking(idx){
+  if(!confirm('Delete this booking?')) return;
+  bookings.splice(idx,1);
+  saveToStorage();
+  renderBookings();
+}
+
+/* Submit handler */
+document.getElementById('bookingForm').addEventListener('submit', function(e){
   e.preventDefault();
-  
-  let booking = {
-    name: document.getElementById("name").value.trim(),
-    phone: document.getElementById("phone").value.trim(),
-    email: document.getElementById("email").value.trim(),
-    people: document.getElementById("people").value.trim(),
-    time: document.getElementById("time").value,
-    date: document.getElementById("date").value
+  const booking = {
+    name: document.getElementById('name').value.trim(),
+    phone: document.getElementById('phone').value.trim(),
+    email: document.getElementById('email').value.trim(),
+    people: document.getElementById('people').value.trim(),
+    time: document.getElementById('time').value,
+    date: document.getElementById('date').value
   };
 
-  let isDuplicate = bookings.some((b, idx) => 
-    idx !== editIndex &&
-    b.phone === booking.phone &&
-    b.date === booking.date &&
-    b.time === booking.time
-  );
-  if (isDuplicate) {
-    alert("Duplicate booking for same phone/date/time!");
-    return;
-  }
+  // duplicate prevention (same phone + date + time)
+  const dup = bookings.some(b => b.phone === booking.phone && b.date === booking.date && b.time === booking.time);
+  if(dup){ alert('Duplicate booking for same phone/date/time!'); return; }
 
-  if (editIndex !== null) {
-    bookings[editIndex] = booking;
-    editIndex = null;
-  } else {
-    bookings.push(booking);
-  }
-
+  bookings.push(booking);
   saveToStorage();
   renderBookings();
   e.target.reset();
 });
 
+/* initial render */
 renderBookings();
 
-// Register Service Worker
-if ('serviceWorker' in navigator) {
+/* SERVICE WORKER registration (important for offline) */
+if('serviceWorker' in navigator){
+  // register from same folder so scope covers /Booking-web-app/
   navigator.serviceWorker.register('./service-worker.js')
-    .then(() => console.log('Service Worker Registered'))
-    .catch(err => console.log('Service Worker Error', err));
+    .then(()=> console.log('Service Worker Registered'))
+    .catch(err => console.warn('SW reg failed', err));
 }
 </script>
 
